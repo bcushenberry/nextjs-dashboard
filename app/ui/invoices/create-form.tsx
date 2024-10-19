@@ -1,6 +1,4 @@
 'use client';
-import { createInvoice, State } from '@/app/lib/actions';
-import { useActionState } from 'react';
 import { CustomerField } from '@/app/lib/definitions';
 import Link from 'next/link';
 import {
@@ -10,17 +8,44 @@ import {
   UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import { Button } from '@/app/ui/button';
+import { useActionState } from 'react';
+import { createInvoice, State } from '@/app/lib/actions';
+import { useState } from 'react';
 
 export default function Form({ customers }: { customers: CustomerField[] }) {
   const initialState: State = { message: null, errors: {} };
   const [state, formAction] = useActionState(createInvoice, initialState);
-  const retainSubmission = async (formEv: React.FormEvent<HTMLFormElement>) => {
-    formEv.preventDefault();
-    const data = new FormData(formEv.currentTarget);
-    formAction(data);
+
+  const [formState, setFormState] = useState({
+    customerId: '',
+    amount: '',
+    status: '',
+    errors: {},
+    message: '',
+  });
+  
+  const submitDetails = async (formEv: React.FormEvent<HTMLFormElement>) => {
+    formEv?.preventDefault();
+    const formData = new FormData(formEv.currentTarget);
+    const result = await createInvoice(formState, formData);
+  
+    if (result.errors) {
+      formAction(formData)
+      setFormState({
+        ...formState,
+        customerId: result.values.customerId,
+        amount: result.values.amount,
+        status: result.values.status,
+        errors: result.errors,
+        message: result.message,
+      });
+    } else {
+      formAction(formData);
+    }
   };
+
   return (
-    <form onSubmit={retainSubmission}>
+    <form onSubmit={submitDetails}>
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
         {/* Customer Name */}
         <div className="mb-4">
@@ -99,7 +124,7 @@ export default function Form({ customers }: { customers: CustomerField[] }) {
                   type="radio"
                   value="pending"
                   className="h-4 w-4 cursor-pointer border-gray-300 bg-gray-100 text-gray-600 focus:ring-2"
-                  aria-describedby="invoice-status-error"                  
+                  aria-describedby="invoice-status-error"
                 />
                 <label
                   htmlFor="pending"

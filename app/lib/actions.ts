@@ -46,6 +46,11 @@ export async function createInvoice(prevState: State, formData: FormData) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
       message: 'Missing Fields. Failed to Create Invoice.',
+      values: {
+        customerId: (formData.get('customerId') as string | null) ?? '',
+        amount: (formData.get('amount') as string | null) ?? '',
+        status: (formData.get('status') as string | null) ?? '',
+      }
     };
   }
  
